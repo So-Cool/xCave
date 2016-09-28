@@ -67,7 +67,7 @@ class GoogleEarthProInterface:
     Y_SCALING = 1
 
     POSITIONS = {
-        "google_earth_pro_offset": (0, 45),
+        "google_earth_pro_offset": (0, 45), # (left, top) [px]
         "save_image_icon": (690, 9),
         "save_image__map_options_menu": (310, 40),
         "save_image__map_options_menu__td": (290, 100),
@@ -75,7 +75,7 @@ class GoogleEarthProInterface:
         "save_image__map_options_menu__scale": (290, 150),
         "save_image__map_options_menu__compass": (290, 175),
         "save_image__resolution": (460, 40),
-        "save_image__resolution__maximum": (460, 140),
+        "save_image__resolution__maximum": (460, 125),
         "save_image__save_image_button": (600, 40),
         "history_button": (485, 15),
         "history_button__back": (310, 100),
@@ -83,7 +83,6 @@ class GoogleEarthProInterface:
         "close_button": (15, -10),
         "close_button__confirmation": (665, 440)
     }
-    SCREEN_OFFSET = (0, 45) # (left, top) [px]
 
     # RETINA = True
     # SAVE_PNG="./save.png"
@@ -112,8 +111,9 @@ class GoogleEarthProInterface:
         self.mouseEvent(kCGEventLeftMouseUp, posx,posy);
 
     def offset(self, a):
-        return (self.X_SCALING*(a[0]+self.SCREEN_OFFSET[0]),
-                self.Y_SCALING*(a[1]+self.SCREEN_OFFSET[1]))
+        o = (self.X_SCALING*(a[0]+self.POSITIONS["google_earth_pro_offset"][0]),
+             self.Y_SCALING*(a[1]+self.POSITIONS["google_earth_pro_offset"][1]))
+        return o
 
     def __init__(self, filename):
         self.filename = filename
@@ -126,6 +126,7 @@ class GoogleEarthProInterface:
         print "Please make sure that *search* tab is opened"
         print "In *preferences->navigation* set *fly-to-speed* to maximum"
         print "Now Maximize it to fit your screen space"
+        print "But make sure that history panel fits into screen..."
         print "and close it"
         raw_input("Press Enter to continue...")
 
@@ -135,21 +136,27 @@ class GoogleEarthProInterface:
         """If calibration file exists load calibration settings; otherwise use
         default."""
         if os.path.isfile(GoogleEarthProCalibration.SETTINGS_FILE):
+            print "Using config file"
             with open(GoogleEarthProCalibration.SETTINGS_FILE, "r") as gf:
-                pass
+                for l in gf:
+                    cd = l.split(",")
+                    self.POSITIONS[cd[0]] = (int(cd[1]), int(cd[2]))
         else:
-            # Offset all distances
+            to_offset = [i for i in self.POSITIONS \
+                         if i is not "google_earth_pro_offset"]
+            for i in to_offset:
+                self.POSITIONS[i] = self.offset(self.POSITIONS[i])
 
     def gep_open(self):
         subprocess.Popen(["/bin/bash", "-c", "open "+self.APP_LOCATION+" &"])
         sleep(self.LONG_TIMEOUT)
 
     def gep_close(self):
-        close = self.offset((15, -10))
+        close = self.POSITIONS["close_button"]
         self.mouseclick(*close)
         sleep(self.SHORT_TIMEOUT)
 
-        confirm = self.offset((665, 440))
+        confirm = self.POSITIONS["close_button__confirmation"]
         self.mouseclick(*confirm)
         sleep(self.SHORT_TIMEOUT)
 
@@ -159,43 +166,43 @@ class GoogleEarthProInterface:
 
     def gep_save_image_setup(self):
         # Open *Save Image* panel
-        save_image = self.offset((690, 9))
+        save_image = self.POSITIONS["save_image_icon"]
         self.mouseclick(*save_image)
         sleep(self.SHORT_TIMEOUT)
 
         # Change *Map Options*
-        map_options = self.offset((310, 40))
+        map_options = self.POSITIONS["save_image__map_options_menu"]
         self.mouseclick(*map_options)
         sleep(self.SHORT_TIMEOUT)
 
         # Uncheck *Title and Description*
-        title_and_description = self.offset((290, 100))
+        title_and_description = self.POSITIONS["save_image__map_options_menu__td"]
         self.mouseclick(*title_and_description)
         sleep(self.SHORT_TIMEOUT)
 
         # Uncheck *Legend*
-        legend = self.offset((290, 125))
+        legend = self.POSITIONS["save_image__map_options_menu__legend"]
         self.mouseclick(*legend)
         sleep(self.SHORT_TIMEOUT)
 
         # Uncheck *Scale*
-        scale = self.offset((290, 150))
+        scale = self.POSITIONS["save_image__map_options_menu__scale"]
         self.mouseclick(*scale)
         sleep(self.SHORT_TIMEOUT)
 
         # Uncheck *Compass*
-        compass = self.offset((290, 175))
+        compass = self.POSITIONS["save_image__map_options_menu__compass"]
         self.mouseclick(*compass)
         sleep(self.SHORT_TIMEOUT)
 
         # Set *Resolution*
-        resolution = self.offset((460, 40))
+        resolution = self.POSITIONS["save_image__resolution"]
         self.mouseclick(*resolution)
         self.mouseclick(*resolution)
         sleep(self.SHORT_TIMEOUT)
 
         # Set *Resolution->Maximum*
-        resolution_maximum = self.offset((460, 140))
+        resolution_maximum = self.POSITIONS["save_image__resolution__maximum"]
         self.mouseclick(*resolution_maximum)
         sleep(self.SHORT_TIMEOUT)
 
@@ -203,7 +210,7 @@ class GoogleEarthProInterface:
 
     def gep_save_image(self):
         # *Save image*
-        save_image = self.offset((600, 40))
+        save_image = self.POSITIONS["save_image__save_image_button"]
         self.mouseclick(*save_image)
         sleep(self.SHORT_TIMEOUT)
 
@@ -228,20 +235,20 @@ class GoogleEarthProInterface:
 
     def gep_history_setup(self):
         # *History*
-        history = self.offset((485, 15))
+        history = self.POSITIONS["history_button"]
         self.mouseclick(*history)
         sleep(self.SHORT_TIMEOUT)
 
     def gep_history_back(self):
         # *History->left*
-        left = self.offset((310, 100))
+        left = self.POSITIONS["history_button__back"]
         self.mouseclick(*left)
         sleep(self.SHORT_TIMEOUT)
 
     def gep_history_forth(self):
         # TODO: untested
         # *History->right*
-        right = self.offset((575, 100))
+        right = self.POSITIONS["history_button__forth"]
         self.mouseclick(*right)
         sleep(self.SHORT_TIMEOUT)
 
