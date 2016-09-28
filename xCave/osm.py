@@ -1,4 +1,6 @@
 import numpy as np
+import requests
+from itertools import tee, izip
 from math import sqrt
 from os.path import basename, isfile
 from operator import itemgetter
@@ -8,10 +10,63 @@ from xml.etree import ElementTree
 
 class OSMapi:
     """Get OSM files spanning in a regular grid through defined area using
-    OpenStreet Maps API."""
-    def __init__(self):
-        pass
-        "http://www.openstreetmap.org/api/0.6/map?bbox=0,0,0.1,0.1"
+    OpenStreet Maps API.
+    Each frame has to span at least .00045*3 to maintain good resolution."""
+
+    API_QUERY = "http://www.openstreetmap.org/api/0.6/map" + \
+        "?bbox=%.6f,%.6f,%.6f,%.6f"
+
+    SCALING_FACTOR = 0.00135
+
+    def __init__(self, name, left, bottom, right, top, scaling_factor=None):
+        if left > right:
+            exit("left > right")
+        if bottom > top:
+            exit("bottom > top")
+        self.name = name
+        self.left = left
+        self.bottom = bottom
+        self.right = right
+        self.top = top
+
+        if scaling_factor is not None:
+            self.SCALING_FACTOR = scaling_factor
+
+        self.blocks = None
+
+    global pairwise
+    def pairwise(iterable):
+        """s -> (s0,s1), (s1,s2), (s2, s3), ..."""
+        a, b = tee(iterable)
+        next(b, None)
+        return izip(a, b)
+
+    def split_region(self):
+        self.blocks = []
+        y = np.abs(self.top - self.bottom)
+        y_factor = np.ceil(y/self.SCALING_FACTOR)
+        if y_factor != 1:
+            y_steps = np.linspace(self.bottom, self.top, y_factor)
+        else:
+            y_steps = [self.bottom, self.top]
+        x = np.abs(self.right - self.left)
+        x_factor = np.ceil(x/self.SCALING_FACTOR)
+        if x_factor != 1:
+            x_steps = np.linspace(self.left, self.right, x_factor)
+        else:
+            x_steps = [self.left, self.right]
+        for l, r in pairwise(x_steps):
+            for b, t in pairwise(y_steps):
+                self.blocks.append((l, b, r, t))
+
+    def get_osm(self):
+        iterator = 0
+        for i in self.blocks:
+            print self.API_QUERY % (i[0], i[1], i[2], i[3])
+            r = requests.get(self.API_QUERY % (i[0], i[1], i[2], i[3]))
+            with open(self.name + "_" + str(iterator) + ".osm", "w") as of:
+                of.write(r.content)
+
 
 class OSMinterface:
     KML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
