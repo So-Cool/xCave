@@ -1,0 +1,12 @@
+# Python
+xCave/*.pyc
+
+# Mac OS X
+*.DS_Store
+
+# Input data
+*.osm
+*.kml
+
+# Calibration config
+gep.calibration
