@@ -55,7 +55,8 @@ class GoogleEarthProCalibration:
             with open(self.SETTINGS_FILE, "w") as sf:
                 write_str = ""
                 for k in self.positions:
-                    write_str += k + ":" + str(self.positions[k]) + "\n"
+                    write_str += k + "," + str(self.positions[k][0]) + "," + \
+                        str(self.positions[k][1]) + "\n"
                 sf.write(write_str)
 
     def calibrate(self):
