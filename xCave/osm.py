@@ -69,6 +69,7 @@ class OSMapi:
 
 
 class OSMinterface:
+    RANGE_FACTOR = 1.2
     KML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
 <Document>
@@ -193,7 +194,7 @@ class OSMinterface:
         lon = abs(float(area["maxlon"]) - float(area["minlon"]))
         lat = abs(float(area["maxlat"]) - float(area["minlat"]))
         l = max(lon, lat)
-        area["range"] = int(1.1*int(l/0.000008))
+        area["range"] = int(self.RANGE_FACTOR*int(l/0.000008))
 
         kml_filename = self.filename[:-3]+"kml"
         area["name"] = basename(kml_filename)
