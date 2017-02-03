@@ -7,13 +7,6 @@ from PIL import Image
 from pynput.keyboard import Key, Listener
 from sys import exit
 from time import sleep
-from Quartz.CoreGraphics import CGEventCreateMouseEvent
-from Quartz.CoreGraphics import CGEventPost
-from Quartz.CoreGraphics import kCGEventMouseMoved
-from Quartz.CoreGraphics import kCGEventLeftMouseDown
-from Quartz.CoreGraphics import kCGEventLeftMouseUp
-from Quartz.CoreGraphics import kCGMouseButtonLeft
-from Quartz.CoreGraphics import kCGHIDEventTap
 
 class GoogleEarthProCalibration:
     POSITIONS_NAMES = [
@@ -132,21 +125,6 @@ class GoogleEarthProInterface:
     SHORT_TIMEOUT = 1.0
     LONG_TIMEOUT = 5
 
-    def mouseEvent(self, type, posx, posy):
-        theEvent = CGEventCreateMouseEvent(None, type, (posx,posy), \
-                                           kCGMouseButtonLeft)
-        CGEventPost(kCGHIDEventTap, theEvent)
-
-    def mousemove(self, posx,posy):
-        self.mouseEvent(kCGEventMouseMoved, posx,posy)
-
-    def mouseclick(self, posx,posy):
-        # uncomment this line if you want to force the mouse
-        # to MOVE to the click location first (I found it was not necessary).
-        #mouseEvent(kCGEventMouseMoved, posx,posy);
-        self.mouseEvent(kCGEventLeftMouseDown, posx,posy);
-        self.mouseEvent(kCGEventLeftMouseUp, posx,posy);
-
     def offset(self, a):
         o = (self.X_SCALING*(a[0]+self.POSITIONS["google_earth_pro_offset"][0]),
              self.Y_SCALING*(a[1]+self.POSITIONS["google_earth_pro_offset"][1]))
@@ -217,11 +195,11 @@ class GoogleEarthProInterface:
 
     def gep_close(self):
         close = self.POSITIONS["close_button"]
-        self.mouseclick(*close)
+        pyautogui.click(*close, button='left')
         sleep(self.SHORT_TIMEOUT)
 
         confirm = self.POSITIONS["close_button__confirmation"]
-        self.mouseclick(*confirm)
+        pyautogui.click(*confirm, button='left')
         sleep(self.SHORT_TIMEOUT)
 
     def gep_open_location(self, location=None):
@@ -233,38 +211,38 @@ class GoogleEarthProInterface:
     def gep_save_image_setup(self):
         # Open *Save Image* panel
         save_image = self.POSITIONS["save_image_icon"]
-        self.mouseclick(*save_image)
+        pyautogui.click(*save_image, button='left')
         sleep(self.SHORT_TIMEOUT)
 
         # Change *Map Options*
         map_options = self.POSITIONS["save_image__map_options_menu"]
-        self.mouseclick(*map_options)
+        pyautogui.click(*map_options, button='left')
         sleep(self.SHORT_TIMEOUT)
 
         # Uncheck *Title and Description*
         title_and_description = self.POSITIONS["save_image__map_options_menu__td"]
-        self.mouseclick(*title_and_description)
+        pyautogui.click(*title_and_description, button='left')
         sleep(self.SHORT_TIMEOUT)
 
         # Uncheck *Legend*
         legend = self.POSITIONS["save_image__map_options_menu__legend"]
-        self.mouseclick(*legend)
+        pyautogui.click(*legend, button='left')
         sleep(self.SHORT_TIMEOUT)
 
         # Uncheck *Scale*
         scale = self.POSITIONS["save_image__map_options_menu__scale"]
-        self.mouseclick(*scale)
+        pyautogui.click(*scale, button='left')
         sleep(self.SHORT_TIMEOUT)
 
         # Uncheck *Compass*
         compass = self.POSITIONS["save_image__map_options_menu__compass"]
-        self.mouseclick(*compass)
+        pyautogui.click(*compass, button='left')
         sleep(self.SHORT_TIMEOUT)
 
         # Set *Resolution*
         resolution = self.POSITIONS["save_image__resolution"]
-        self.mouseclick(*resolution)
-        self.mouseclick(*resolution)
+        pyautogui.click(*resolution, button='left')
+        pyautogui.click(*resolution, button='left')
         sleep(self.SHORT_TIMEOUT)
 
         # Set *Resolution->Maximum* or *current
@@ -272,7 +250,7 @@ class GoogleEarthProInterface:
             resolution_type = self.POSITIONS["save_image__resolution__maximum"]
         else:
             resolution_type = self.POSITIONS["save_image__resolution__current"]
-        self.mouseclick(*resolution_type)
+        pyautogui.click(*resolution_type, button='left')
         sleep(self.SHORT_TIMEOUT)
 
     def save_date_window(self, filename=None):
@@ -295,7 +273,7 @@ class GoogleEarthProInterface:
         self.save_date_window(filename)
         # *Save image*
         save_image = self.POSITIONS["save_image__save_image_button"]
-        self.mouseclick(*save_image)
+        pyautogui.click(*save_image, button='left')
         sleep(self.SHORT_TIMEOUT)
 
         # Give it a proper name
@@ -319,18 +297,18 @@ class GoogleEarthProInterface:
 
         # Click save button
         # print self.save
-        # self.mouseclick(*self.save)
+        # pyautogui.click(*self.save, button='left')
         # sleep(self.SHORT_TIMEOUT)
 
     def gep_history_setup(self):
         # *History*
         history = self.POSITIONS["history_button"]
-        self.mouseclick(*history)
+        pyautogui.click(*history, button='left')
         sleep(self.SHORT_TIMEOUT)
 
     def gep_history_close(self):
         history = self.POSITIONS["history_button"]
-        self.mouseclick(*history)
+        pyautogui.click(*history, button='left')
         self.history_counter = 0
         self.DATA_CURRENT = None
         sleep(self.SHORT_TIMEOUT)
@@ -338,14 +316,14 @@ class GoogleEarthProInterface:
     def gep_history_back(self):
         # *History->left*
         left = self.POSITIONS["history_button__back"]
-        self.mouseclick(*left)
+        pyautogui.click(*left, button='left')
         sleep(self.SHORT_TIMEOUT)
 
     def gep_history_forth(self):
         # TODO: untested
         # *History->right*
         right = self.POSITIONS["history_button__forth"]
-        self.mouseclick(*right)
+        pyautogui.click(*right, button='left')
         sleep(self.SHORT_TIMEOUT)
 
     def gep_save_history(self):
