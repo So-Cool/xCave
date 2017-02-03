@@ -90,7 +90,7 @@ if __name__ == "__main__":
     # Get OSM file of specified region
     if args.osm:
         # Decide whether to split
-        osm_range = args.osm.split()
+        osm_range = args.osm[0].split()
         osm_name = "_".join(osm_range)
         osm_range = [float(i) for i in osm_range]
 
