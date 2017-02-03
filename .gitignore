@@ -1,5 +1,6 @@
 # Python
 xCave/*.pyc
+test
 
 # Mac OS X
 *.DS_Store
@@ -9,4 +10,4 @@ xCave/*.pyc
 *.kml
 
 # Calibration config
-gep.calibration
+*.calibration

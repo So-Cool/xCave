@@ -1,6 +1,6 @@
 import glob
 import numpy as np
-from os.path import basename
+from os.path import basename, isdir, isfile
 from PIL import Image
 from osm import OSMinterface
 
@@ -8,10 +8,13 @@ class PatchFinder:
     def __init__(self, osm_dir, image=None):
         self.image = image
 
-        if osm_dir[-1] == "/":
+        if isdir(osm_dir):
+            if osm_dir[-1] == "/":
+                self.osm_dir = osm_dir
+            else:
+                self.osm_dir = osm_dir + "/"
+        elif isfile(osm_dir):
             self.osm_dir = osm_dir
-        else:
-            self.osm_dir = osm_dir + "/"
 
         self.osms = None
 
@@ -20,7 +23,14 @@ class PatchFinder:
         img_loc = self.get_gps_location(image)
 
         self.osms = {}
-        for i in glob.glob(self.osm_dir + "*.osm"):
+
+        osm_to_check = []
+        if isfile(self.osm_dir):
+            osm_to_check = [self.osm_dir]
+        elif isdir(self.osm_dir):
+            osm_to_check = glob.glob(self.osm_dir + "*.osm")
+
+        for i in osm_to_check:
             f = OSMinterface(i)
             f.read()
             self.osms[basename(i)] = {}

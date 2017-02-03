@@ -1,8 +1,11 @@
+import json
 import numpy as np
+import os
 import requests
 from itertools import tee, izip
-from math import sqrt
-from os.path import basename, isfile
+from math import atan2, cos, radians, sin, sqrt
+from os.path import basename, exists, isfile
+from os import makedirs
 from operator import itemgetter
 from scipy.spatial import ConvexHull#, Delaunay
 from sys import exit
@@ -60,16 +63,20 @@ class OSMapi:
                 self.blocks.append((l, b, r, t))
 
     def get_osm(self):
-        iterator = 0
-        for i in self.blocks:
+        if self.blocks:
+            it = self.blocks
+            iterator = ["_%d"%i for i in range(len(it))]
+        else:
+            it = [(self.left, self.bottom, self.right, self.top)]
+            iterator = [""]
+        for i, j in zip(it, iterator):
             print self.API_QUERY % (i[0], i[1], i[2], i[3])
             r = requests.get(self.API_QUERY % (i[0], i[1], i[2], i[3]))
-            with open(self.name + "_" + str(iterator) + ".osm", "w") as of:
+            with open(self.name + j + ".osm", "w") as of:
                 of.write(r.content)
 
 
 class OSMinterface:
-    RANGE_FACTOR = 1.2
     KML_TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
 <Document>
@@ -144,6 +151,12 @@ class OSMinterface:
 </Document>
 </kml>"""
 
+    RANGE_FACTOR = 1.3 # 1.2
+    MIN_SPAN_LON = 0.0004
+    MIN_SPAN_LAT = 0.0004
+    NUMBER_OF_CLOSEST_OBJECTS_TO_EXTRACT_BUILDING = 5
+    NUMBER_OF_CLOSEST_OBJECTS_TO_EXTRACT_ROAD = 2
+
     def __init__(self, filename):
         # Map bounds
         self.bounds = None
@@ -176,13 +189,169 @@ class OSMinterface:
         self.objects = {}
         self.types = {}
         for i in e.iter("way"):
+            object_type = None
+            for j in i.iter("tag"):
+                # TODO: add more object types than *building* and *highway*
+                if j.attrib["k"] == "building":
+                    self.types[i.attrib["id"]] = "building"
+                    object_type = True
+                    break
+                elif j.attrib["k"] == "highway":
+                    self.types[i.attrib["id"]] = "highway"
+                    object_type = True
+                    break
+            if object_type is None:
+                continue
+
             self.objects[i.attrib["id"]] = []
             for j in i.iter("nd"):
                 self.objects[i.attrib["id"]].append(j.attrib["ref"])
-            for j in i.iter("tag"):
-                # TODO: add more object types than *building*
-                if j.attrib["k"] == "building":
-                    self.types[i.attrib["id"]] = j.attrib["k"]
+
+    def geo_distance(self, (lat1, lon1), (lat2, lon2)):
+        """Calculate geo-distance between 2 points (in meters)."""
+        # approximate radius of earth in meters
+        R = 6373000.0
+
+        lat1 = radians(lat1)
+        lon1 = radians(lon1)
+        lat2 = radians(lat2)
+        lon2 = radians(lon2)
+
+        dlon = lon2 - lon1
+        dlat = lat2 - lat1
+
+        a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+        distance = R * c
+
+        return distance
+
+    def save_object_to_klm(self, o, dirname="", max_lat=None, max_lon=None, max_range=None):
+        """Save object as KLM file."""
+        if dirname:
+            dirname += "/"
+        kml_filename = o+".kml"
+
+        area = self.get_simple_bounding_box(o)
+        area["name"] = o
+        area["centreLat"], area["centreLon"] = self.get_centre(area)
+
+        lon = abs(float(area["maxlon"]) - float(area["minlon"]))
+        lat = abs(float(area["maxlat"]) - float(area["minlat"]))
+
+        if max_lat is not None and max_lon is not None:
+            # Maximise lat
+            diff = (max_lat - lat) / 2.0
+            area["minlat"] = str(float(area["minlat"]) - diff)
+            area["maxlat"] = str(float(area["maxlat"]) + diff)
+            # Maximise lon
+            diff = (max_lon - lon) / 2.0
+            area["minlon"] = str(float(area["minlon"]) - diff)
+            area["maxlon"] = str(float(area["maxlon"]) + diff)
+        else:
+            # Enforce minimum size of the area
+            if lon < self.MIN_SPAN_LON:
+                diff = (self.MIN_SPAN_LON - lon) / 2.0
+                lon = self.MIN_SPAN_LON
+                area["minlon"] = str(float(area["minlon"]) - diff)
+                area["maxlon"] = str(float(area["maxlon"]) + diff)
+            if lat < self.MIN_SPAN_LAT:
+                diff = (self.MIN_SPAN_LAT - lat) / 2.0
+                lat = self.MIN_SPAN_LAT
+                area["minlat"] = str(float(area["minlat"]) - diff)
+                area["maxlat"] = str(float(area["maxlat"]) + diff)
+
+        # 1m per each 0.00001 of difference in altitude or longitude
+        l = max(lon, lat)
+        if max_range is None:
+            area["range"] = int(self.RANGE_FACTOR*int(l/0.000008))
+        else:
+            area["range"] = max_range
+
+        kml = self.KML_TEMPLATE % area
+        with open(dirname + kml_filename, "w") as kml_file:
+            kml_file.write(kml)
+
+    def save_klm_per_object(self, centroids=[]):
+        """Save every object in the OSM file into KLM."""
+        # Create a directory for the (closest) objects
+        dirname = self.filename[:-4] + "_objects"
+        if not exists(dirname):
+            makedirs(dirname)
+
+        # Get centers for each object
+        object_centres = {}
+        for o in self.types:
+            cLat, cLon = self.get_centre(self.get_simple_bounding_box(o))
+            object_centres[o] = (cLat, cLon)
+
+        # Save objects nearest to centroids to KLM
+        # 5 closest *buildings* and 2 *roads*
+        if centroids:
+            objects_to_extract = []
+            for centroid in centroids:
+                c_dist = []
+                # Get distances form objects
+                for o in object_centres:
+                    c_dist.append(
+                        (self.geo_distance(centroid, object_centres[o]), o)
+                    )
+                # Sort on distance
+                c_dist.sort()
+
+                # Select top NUMBER_OF_CLOSEST_OBJECTS_TO_EXTRACT_BUILDING and
+                # ROAD
+                b, r = 0, 0
+                for i in c_dist:
+                    if self.types[i[1]] == "building" and \
+                       b < self.NUMBER_OF_CLOSEST_OBJECTS_TO_EXTRACT_BUILDING:
+                        objects_to_extract.append(i[1])
+                        b += 1
+                    elif self.types[i[1]] == "highway" and \
+                       b < self.NUMBER_OF_CLOSEST_OBJECTS_TO_EXTRACT_ROAD:
+                        objects_to_extract.append(i[1])
+                        r += 1
+                    else:
+                        break
+
+            # Remove duplicates from the lsit
+            objects_to_extract = list(set(objects_to_extract))
+
+            max_range = -1.
+            max_lon = -1.
+            max_lat = -1.
+            for o in objects_to_extract:
+                area = self.get_simple_bounding_box(o)
+                area["centreLat"], area["centreLon"] = self.get_centre(area)
+                lon = abs(float(area["maxlon"]) - float(area["minlon"]))
+                lat = abs(float(area["maxlat"]) - float(area["minlat"]))
+                max_lat = max(max_lat, lat)
+                max_lon = max(max_lon, lon)
+            # 1m per each 0.00001 of difference in altitude or longitude
+            l = max(max_lon, max_lat)
+            max_range = int(self.RANGE_FACTOR*int(l/0.000008))
+
+            # Memorise range, x and y sizes in JSON format
+            with open(os.path.join(dirname, "region_spec.json"), "w") as region_spec:
+                json.dump(
+                {
+                    "max_lat": max_lat,
+                    "max_lon": max_lon,
+                    "max_range": max_range
+                },
+                region_spec,
+                sort_keys=True,
+                indent=2,
+                separators=(',', ': ')
+                )
+
+            for o in objects_to_extract:
+                self.save_object_to_klm(o, dirname, max_lat, max_lon, max_range)
+        # Save all objects to KLM
+        else:
+            for o in self.types:
+                self.save_object_to_klm(o, dirname)
 
     def save_as_kml(self):
         "Save area extracted from OSM file into KML file."
@@ -211,9 +380,11 @@ class OSMinterface:
             print "Unknown object id: ", id
             return None
 
-    def get_centre(self):
-        c_lat = (float(self.bounds["maxlat"])+float(self.bounds["minlat"]))/2
-        c_lon = (float(self.bounds["maxlon"])+float(self.bounds["minlon"]))/2
+    def get_centre(self, obj=None):
+        if obj is None:
+            obj = self.bounds
+        c_lat = (float(obj["maxlat"])+float(obj["minlat"]))/2
+        c_lon = (float(obj["maxlon"])+float(obj["minlon"]))/2
         return c_lat, c_lon
 
     def dist(self, a, b):
@@ -283,7 +454,7 @@ class OSMinterface:
         return {
             "minlat": min(coordinates, key=itemgetter(0))[0],
             "maxlat": max(coordinates, key=itemgetter(0))[0],
-            "mminlon": min(coordinates, key=itemgetter(1))[1],
+            "minlon": min(coordinates, key=itemgetter(1))[1],
             "maxlon": max(coordinates, key=itemgetter(1))[1]
         }
 
