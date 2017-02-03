@@ -30,6 +30,8 @@ def curate_tuples(d, type="int"):
 
 def str2tuple(d, type="int"):
     dd = None
+    if d.strip().lower() == "none":
+        return dd
     st = d.strip().strip(")").strip("(").split(",")
     if type == "int":
         dd = (int(st[0]), int(st[1]))

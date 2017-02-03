@@ -40,9 +40,10 @@ class GoogleEarthProCalibration:
             # Stop listener
             return False
 
-    def __init__(self, gep_path, gui=True):
+    def __init__(self, gep_path, version, gui=True):
         self.gep_path = gep_path
         self.gui = gui
+        self.version = version
         self.positions = {}
         for i in self.POSITIONS_NAMES:
             self.positions[i] = None
@@ -53,6 +54,8 @@ class GoogleEarthProCalibration:
 
     def memorise_locations(self):
         for k in self.POSITIONS_NAMES:
+            if self.version == "standard" and k.startswith("save_image__"):
+                continue
             if self.gui:
                 root = Tkinter.Tk()
                 label = Tkinter.Message(root, text="Please move mouse over: *%s* and press left or right *control*."%k, relief=Tkinter.RAISED)
@@ -130,12 +133,13 @@ class GoogleEarthProInterface:
              self.Y_SCALING*(a[1]+self.POSITIONS["google_earth_pro_offset"][1]))
         return o
 
-    def __init__(self, filename, gep_path, save_location="~/Desktop/", \
+    def __init__(self, filename, gep_path, version, save_location="~/Desktop/", \
                  calibration=None, history_bound=None, selected_resolution="maximum", \
                  help_message=True):
         self.gep_path = gep_path
         self.save_location = save_location
         self.selected_resolution = selected_resolution
+        self.version = version
 
         if history_bound is None:
             self.upper_history_bound = 30
@@ -175,6 +179,8 @@ class GoogleEarthProInterface:
         default."""
         if calibration_dict is not None:
             for i in self.POSITIONS:
+                if self.version == "standard" and i.startswith("save_image__"):
+                    continue
                 self.POSITIONS[i] = calibration_dict[i]
         else:
             if os.path.isfile(GoogleEarthProCalibration.SETTINGS_FILE):
@@ -209,6 +215,10 @@ class GoogleEarthProInterface:
         sleep(self.LONG_TIMEOUT)
 
     def gep_save_image_setup(self):
+        # Skip setup if using standart Google Earth version
+        if self.version == "standard":
+            return
+
         # Open *Save Image* panel
         save_image = self.POSITIONS["save_image_icon"]
         pyautogui.click(*save_image, button='left')
@@ -272,7 +282,10 @@ class GoogleEarthProInterface:
         # Save data
         self.save_date_window(filename)
         # *Save image*
-        save_image = self.POSITIONS["save_image__save_image_button"]
+        if self.version == "standard":
+            save_image = self.POSITIONS["save_image_icon"]
+        else: # pro
+            save_image = self.POSITIONS["save_image__save_image_button"]
         pyautogui.click(*save_image, button='left')
         sleep(self.SHORT_TIMEOUT)
 

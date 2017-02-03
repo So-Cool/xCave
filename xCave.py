@@ -61,7 +61,8 @@ if __name__ == "__main__":
         else:
             gep_path = config.get("GoogleEarthPro", {}).get("executable_path", None)
             gui = config.get("GoogleEarthPro", {}).get("gui", None)
-            c = GoogleEarthProCalibration(gep_path, gui)
+            version = config.get("GoogleEarthPro", {}).get("version", None)
+            c = GoogleEarthProCalibration(gep_path, version, gui)
             gep_calibration = c.calibrate()
             conf.set("GoogleEarthPro", "calibrated", True)
             for i in gep_calibration:
@@ -81,10 +82,11 @@ if __name__ == "__main__":
         history_bound = config.get("GoogleEarthPro", {}).get("history_bound", 10)
         selected_resolution = config.get("GoogleEarthPro", {}).get("resolution", "current")
         help_message = config.get("GoogleEarthPro", {}).get("help_message", True)
+        version = config.get("GoogleEarthPro", {}).get("version", None)
 
-        g = GoogleEarthProInterface(args.imagery[0], gep_path, save_location, \
-                                    calibration, history_bound, selected_resolution,
-                                    help_message)
+        g = GoogleEarthProInterface(args.imagery[0], gep_path, version, \
+                                    save_location, calibration, history_bound, \
+                                    selected_resolution, help_message)
         g.gep_save_history()
 
     # Get OSM file of specified region
