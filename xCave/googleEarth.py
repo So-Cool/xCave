@@ -190,6 +190,8 @@ class GoogleEarthProInterface:
             raw_input("Press Enter to open Google Earth Pro...")
             self.gep_open()
             raw_input("Press Enter to continue (once the above steps have been completed and Google Earth has been closed)...")
+            if self.os == "linux":
+                self.gep_close(False)
         self.calibrate(calibration)
 
     def calibrate(self, calibration_dict=None):
@@ -217,14 +219,15 @@ class GoogleEarthProInterface:
         subprocess.Popen(["/bin/bash", "-c", self.gep_path+" &"])
         sleep(self.LONG_TIMEOUT)
 
-    def gep_close(self):
+    def gep_close(self, confirm_choice=True):
         close = self.POSITIONS["close_button"]
         pyautogui.click(*close, button='left')
         sleep(self.SHORT_TIMEOUT)
 
-        confirm = self.POSITIONS["close_button__confirmation"]
-        pyautogui.click(*confirm, button='left')
-        sleep(self.SHORT_TIMEOUT)
+        if confirm_choice:
+            confirm = self.POSITIONS["close_button__confirmation"]
+            pyautogui.click(*confirm, button='left')
+            sleep(self.SHORT_TIMEOUT)
 
     def gep_open_location(self, location=None):
         if location is None:
