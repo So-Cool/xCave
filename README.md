@@ -16,6 +16,16 @@ pip install --user -r requirements.xxx.txt
 
 Where `xxx` is `osx` or `linux` depending on your operating system. If you're using Mac OS X installing *Xcode* first is required.
 
+Ubuntu requires couple of additional packages:
+```
+sudo apt-get install scrot
+sudo apt-get install python-tk
+sudo apt-get install python-dev
+sudo apt-get install python-imaging-tk
+sudo apt-get install python-numpy
+sudo apt-get install python-scipy
+```
+
 ## Usage ##
 ```
 ./xCave.py -h

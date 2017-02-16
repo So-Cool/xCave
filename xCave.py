@@ -4,15 +4,50 @@ import argparse
 import ConfigParser
 import os
 import sys
-from xCave.fitBB import ElementOffset
-from xCave.googleEarth import GoogleEarthProCalibration
-from xCave.googleEarth import GoogleEarthProInterface
 from xCave.helpers import parse_config
-from xCave.helpers import curate_tuples
-from xCave.helpers import str2tuple
-from xCave.osm import OSMapi
-from xCave.osm import OSMinterface
-from xCave.photo import PatchFinder
+try:
+    from xCave.googleEarth import GoogleEarthProCalibration
+    CALIBRATION = True
+except ImportError, e:
+    print >> sys.stderr, "Calibration packages are missing."
+    print >> sys.stderr, e
+    print >> sys.stderr, 40*"~-"
+    CALIBRATION = False
+try:
+    from xCave.googleEarth import GoogleEarthProInterface
+    from xCave.helpers import curate_tuples
+    INTERFACE = True
+except ImportError, e:
+    print >> sys.stderr, "Google Earth Interface packages are missing."
+    print >> sys.stderr, e
+    print >> sys.stderr, 40*"~-"
+    INTERFACE = False
+try:
+    from xCave.osm import OSMapi
+    OSM = True
+except ImportError, e:
+    print >> sys.stderr, "OSM API packages are missing."
+    print >> sys.stderr, e
+    print >> sys.stderr, 40*"~-"
+    OSM = False
+try:
+    from xCave.helpers import str2tuple
+    from xCave.osm import OSMinterface
+    KLM = True
+except ImportError, e:
+    print >> sys.stderr, "KLM packages are missing."
+    print >> sys.stderr, e
+    print >> sys.stderr, 40*"~-"
+    KLM = False
+try:
+    from xCave.photo import PatchFinder
+    GEO = True
+except ImportError, e:
+    print >> sys.stderr, "Geolocation packages are missing."
+    print >> sys.stderr, e
+    print >> sys.stderr, 40*"~-"
+    GEO = False
+# from xCave.fitBB import ElementOffset
 
 CONFIG_FILE = "./xCave.conf"
 
@@ -44,7 +79,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Calibrate Google Earth Pro
-    if args.calibrate:
+    if args.calibrate and CALIBRATION:
         if config.get("GoogleEarthPro", {}).get("calibrated", False):
             print "Google Earth is already calibrated"
             y = None
@@ -71,7 +106,7 @@ if __name__ == "__main__":
                 conf.write(cfw)
 
     # Download Google Earth History
-    if args.imagery:
+    if args.imagery and INTERFACE:
         # Load settings
         gep_path = config.get("GoogleEarthPro", {}).get("executable_path", None)
         save_location = config.get("GoogleEarthPro", {}).get("save_location", "~/Desktop")
@@ -90,7 +125,7 @@ if __name__ == "__main__":
         g.gep_save_history()
 
     # Get OSM file of specified region
-    if args.osm:
+    if args.osm and OSM:
         # Decide whether to split
         osm_range = args.osm[0].split()
         osm_name = "_".join(osm_range)
@@ -103,7 +138,7 @@ if __name__ == "__main__":
         a.get_osm()
 
     # Save as klm
-    if len(args.klm) > 0:
+    if len(args.klm) > 0 and KLM:
         def str2lot(s):
             ss = s.split(";")
             ss = [str2tuple(i, "float") for i in ss]
