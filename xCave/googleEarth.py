@@ -289,8 +289,8 @@ class GoogleEarthProInterface:
             filename = self.filename[0]
         window = (self.scaling*self.POSITIONS["history_window__top_left"][0],
                   self.scaling*self.POSITIONS["history_window__top_left"][1],
-                  self.scaling*self.POSITIONS["history_window__bottom_right"][0],
-                  self.scaling*self.POSITIONS["history_window__bottom_right"][1])
+                  self.scaling*self.POSITIONS["history_window__bottom_right"][0]-self.scaling*self.POSITIONS["history_window__top_left"][0],
+                  self.scaling*self.POSITIONS["history_window__bottom_right"][1]-self.scaling*self.POSITIONS["history_window__top_left"][1])
         im = pyautogui.screenshot(region=window)
         im.save(os.path.join(
                     os.path.expanduser(self.save_location),
@@ -312,7 +312,7 @@ class GoogleEarthProInterface:
 
         # Give it a proper name
         name = os.path.basename(filename)[:-4] + "_" + str(self.history_counter)
-        pyautogui.typewrite(name)
+        pyautogui.typewrite(name, interval=0.1)
         pyautogui.typewrite(["enter"])
         self.history_counter += 1
 
