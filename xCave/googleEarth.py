@@ -136,7 +136,7 @@ class GoogleEarthProInterface:
 
     def __init__(self, filename, gep_path, version, save_location="~/Desktop/", \
                  calibration=None, history_bound=None, selected_resolution="maximum", \
-                 help_message=True, scaling=1):
+                 help_message=True, scaling=1, os_name="linux"):
         self.gep_path = gep_path
         self.save_location = save_location
         self.selected_resolution = selected_resolution
@@ -146,6 +146,12 @@ class GoogleEarthProInterface:
             self.scaling = scaling
         else:
             self.scaling = 1
+
+        self.os = os_name
+        if os_name == "linux":
+            self.opener = "xdg-open "
+        else:
+            self.opener = "open "
 
         if history_bound is None:
             self.upper_history_bound = 30
@@ -217,7 +223,7 @@ class GoogleEarthProInterface:
     def gep_open_location(self, location=None):
         if location is None:
             location = self.filename[0]
-        subprocess.Popen(["/bin/bash", "-c", self.gep_path+" "+location+" &"])
+        subprocess.Popen(["/bin/bash", "-c", self.opener+location+" &"])
         sleep(self.LONG_TIMEOUT)
 
     def gep_save_image_setup(self):
@@ -346,12 +352,13 @@ class GoogleEarthProInterface:
         sleep(self.SHORT_TIMEOUT)
 
     def gep_save_history(self):
-        self.gep_open()
-        sleep(self.LONG_TIMEOUT)
-        self.gep_save_image_setup()
+        if self.os == "mac":
+            self.gep_open()
+            sleep(self.LONG_TIMEOUT)
+            self.gep_save_image_setup()
         for f in self.filename:
             self.gep_open_location(f)
-            sleep(self.SHORT_TIMEOUT)
+            sleep(self.LONG_TIMEOUT)
             self.gep_save_image(f)
 
             sleep(self.SHORT_TIMEOUT)
@@ -370,7 +377,11 @@ class GoogleEarthProInterface:
             self.move_images(f)
             self.gep_history_close()
             sleep(self.LONG_TIMEOUT)
-        self.gep_close()
+            if self.os == "linux":
+                sleep(self.LONG_TIMEOUT)
+                self.gep_close()
+        if self.os == "mac":
+            self.gep_close()
 
     def move_images(self, filename=None):
         if filename is None:
