@@ -26,6 +26,33 @@ sudo apt-get install python-numpy
 sudo apt-get install python-scipy
 ```
 
+## Google Earth configuration ##
+### Configure Google Earth interface ###
+- Uncheck *Show tips at start-up*
+- Make sure that *Search* tab is opened
+- Uncheck all *Places*
+- Uncheck all *Layers*
+
+![](docs/ge_p.png "")
+
+### Configure Google Earth speed ###
+- In `Preferences --> Navigation` set *Fly-To speed* to maximum
+- Now *maximize* Google Earth window to fit most of your screen space
+
+![](docs/ge_fs.png "")
+
+### Configure Google Earth save image ###
+![](docs/ge_im.png "")
+![](docs/ge_in.png "")
+
+### Configure Google Earth history ###
+When resizing the window make sure that history panel fits into the screen.
+
+![](docs/ge_h.png "")
+
+### Configure Google Earth exit ###
+![](./docs/ge_q.png "")
+
 ## Usage ##
 ```
 ./xCave.py -h

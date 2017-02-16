@@ -42,6 +42,7 @@ class GoogleEarthProCalibration:
 
     def __init__(self, gep_path, version, gui=True):
         self.gep_path = gep_path
+        self.dummy = "./dummy.kml"
         self.gui = gui
         self.version = version
         self.positions = {}
@@ -70,7 +71,7 @@ class GoogleEarthProCalibration:
             self.positions[k] = self.mouse_position()
 
     def open_gep(self):
-        subprocess.Popen(["/bin/bash", "-c", "open "+self.gep_path+" &"])
+        subprocess.Popen(["/bin/bash", "-c", self.gep_path+" "+self.dummy+" &"])
 
     def save_settings(self, settings_file):
         with open(settings_file, "w") as sf:
@@ -135,11 +136,16 @@ class GoogleEarthProInterface:
 
     def __init__(self, filename, gep_path, version, save_location="~/Desktop/", \
                  calibration=None, history_bound=None, selected_resolution="maximum", \
-                 help_message=True):
+                 help_message=True, scaling=1):
         self.gep_path = gep_path
         self.save_location = save_location
         self.selected_resolution = selected_resolution
         self.version = version
+
+        if scaling:
+            self.scaling = scaling
+        else:
+            self.scaling = 1
 
         if history_bound is None:
             self.upper_history_bound = 30
@@ -196,7 +202,7 @@ class GoogleEarthProInterface:
                     self.POSITIONS[i] = self.offset(self.POSITIONS[i])
 
     def gep_open(self):
-        subprocess.Popen(["/bin/bash", "-c", "open "+self.gep_path+" &"])
+        subprocess.Popen(["/bin/bash", "-c", self.gep_path+" &"])
         sleep(self.LONG_TIMEOUT)
 
     def gep_close(self):
@@ -211,7 +217,7 @@ class GoogleEarthProInterface:
     def gep_open_location(self, location=None):
         if location is None:
             location = self.filename[0]
-        subprocess.Popen(["/bin/bash", "-c", "open "+location+" &"])
+        subprocess.Popen(["/bin/bash", "-c", self.gep_path+" "+location+" &"])
         sleep(self.LONG_TIMEOUT)
 
     def gep_save_image_setup(self):
@@ -266,10 +272,10 @@ class GoogleEarthProInterface:
     def save_date_window(self, filename=None):
         if filename is None:
             filename = self.filename[0]
-        window = (1.75*self.POSITIONS["history_window__top_left"][0],
-                  1.75*self.POSITIONS["history_window__top_left"][1],
-                  1.75*self.POSITIONS["history_window__bottom_right"][0],
-                  1.75*self.POSITIONS["history_window__bottom_right"][1])
+        window = (self.scaling*self.POSITIONS["history_window__top_left"][0],
+                  self.scaling*self.POSITIONS["history_window__top_left"][1],
+                  self.scaling*self.POSITIONS["history_window__bottom_right"][0],
+                  self.scaling*self.POSITIONS["history_window__bottom_right"][1])
         im = pyautogui.screenshot(region=window)
         im.save(os.path.join(
                     os.path.expanduser(self.save_location),
