@@ -40,11 +40,17 @@ class GoogleEarthProCalibration:
             # Stop listener
             return False
 
-    def __init__(self, gep_path, version, gui=True):
+    def __init__(self, gep_path, version, gui=True, os_name="linux"):
         self.gep_path = gep_path
         self.dummy = "./dummy.kml"
         self.gui = gui
         self.version = version
+
+        if os_name == "linux":
+            self.opener = "xdg-open "
+        else:
+            self.opener = "open "
+
         self.positions = {}
         for i in self.POSITIONS_NAMES:
             self.positions[i] = None
@@ -71,7 +77,7 @@ class GoogleEarthProCalibration:
             self.positions[k] = self.mouse_position()
 
     def open_gep(self):
-        subprocess.Popen(["/bin/bash", "-c", self.gep_path+" "+self.dummy+" &"])
+        subprocess.Popen(["/bin/bash", "-c", self.opener+self.dummy+" &"])
 
     def save_settings(self, settings_file):
         with open(settings_file, "w") as sf:

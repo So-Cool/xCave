@@ -97,7 +97,8 @@ if __name__ == "__main__":
             gep_path = config.get("GoogleEarthPro", {}).get("executable_path", None)
             gui = config.get("GoogleEarthPro", {}).get("gui", None)
             version = config.get("GoogleEarthPro", {}).get("version", None)
-            c = GoogleEarthProCalibration(gep_path, version, gui)
+            os = config.get("GoogleEarthPro", {}).get("os", "linux")
+            c = GoogleEarthProCalibration(gep_path, version, gui, os)
             gep_calibration = c.calibrate()
             conf.set("GoogleEarthPro", "calibrated", True)
             for i in gep_calibration:
