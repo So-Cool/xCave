@@ -191,7 +191,7 @@ class GoogleEarthProInterface:
             self.gep_open()
             raw_input("Press Enter to continue (once the above steps have been completed and Google Earth has been closed)...")
             if self.os == "linux":
-                self.gep_close(False)
+                raw_input("Please close Google Earth and press Enter")
         self.calibrate(calibration)
 
     def calibrate(self, calibration_dict=None):
