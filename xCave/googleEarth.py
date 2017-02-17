@@ -142,11 +142,12 @@ class GoogleEarthProInterface:
 
     def __init__(self, filename, gep_path, version, save_location="~/Desktop/", \
                  calibration=None, history_bound=None, selected_resolution="maximum", \
-                 help_message=True, scaling=1, os_name="linux"):
+                 help_message=True, scaling=1, os_name="linux", typewrite_interval=0.25):
         self.gep_path = gep_path
         self.save_location = save_location
         self.selected_resolution = selected_resolution
         self.version = version
+        self.typewrite_interval = typewrite_interval
 
         if scaling:
             self.scaling = scaling
@@ -312,7 +313,7 @@ class GoogleEarthProInterface:
 
         # Give it a proper name
         name = os.path.basename(filename)[:-4] + "_" + str(self.history_counter)
-        pyautogui.typewrite(name, interval=0.1)
+        pyautogui.typewrite(name, interval=self.typewrite_interval)
         pyautogui.typewrite(["enter"])
         self.history_counter += 1
 
@@ -350,6 +351,9 @@ class GoogleEarthProInterface:
     def gep_history_back(self):
         # *History->left*
         left = self.POSITIONS["history_button__back"]
+        if self.version == "standard":
+            pyautogui.moveTo(*left)
+            sleep(self.SHORT_TIMEOUT)
         pyautogui.click(*left, button='left')
         sleep(self.SHORT_TIMEOUT)
 
@@ -357,6 +361,9 @@ class GoogleEarthProInterface:
         # TODO: untested
         # *History->right*
         right = self.POSITIONS["history_button__forth"]
+        if self.version == "standard":
+            pyautogui.moveTo(*right)
+            sleep(self.SHORT_TIMEOUT)
         pyautogui.click(*right, button='left')
         sleep(self.SHORT_TIMEOUT)
 

@@ -142,10 +142,11 @@ if __name__ == "__main__":
         version = config.get("GoogleEarthPro", {}).get("version", None)
         scaling = config.get("GoogleEarthPro", {}).get("retina_scaling", 1)
         os = config.get("GoogleEarthPro", {}).get("os", "linux")
+        typewrite_interval = config.get("GoogleEarthPro", {}).get("typewrite_interval", 0.25)
 
         g = GoogleEarthProInterface(args.imagery[0], gep_path, version, \
                                     save_location, calibration, history_bound, \
-                                    selected_resolution, help_message, scaling, os)
+                                    selected_resolution, help_message, scaling, os, typewrite_interval)
         g.gep_save_history()
 
     # Get OSM file of specified region

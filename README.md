@@ -14,6 +14,11 @@ Otherwise do:
 pip install --user -r requirements.xxx.txt
 ```
 
+If you just want to use *image alignment* module it's enough to install Python `Pillow` package:
+```
+pip install Pillow==3.4.2
+```
+
 Where `xxx` is `osx` or `linux` depending on your operating system. If you're using Mac OS X installing *Xcode* first is required.
 
 Ubuntu requires couple of additional packages:

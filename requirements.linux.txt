@@ -1,0 +1,7 @@
+PyAutoGUI==0.9.33
+PyMsgBox==1.0.3
+PyScreeze==0.1.8
+PyTweening==1.0.3
+enum34==1.1.6
+pynput==1.2
+python-xlib==0.18
