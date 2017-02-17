@@ -375,13 +375,15 @@ class GoogleEarthProInterface:
             sleep(self.SHORT_TIMEOUT)
             self.gep_save_image(f)
             i = 0
+            same_counter = 0
             # while not pyautogui.locateOnScreen("xCave/l.png") and \
-            while self.DATA_CURRENT != self.DATA_PREVIOUS and \
-                i < self.upper_history_bound:
+            while same_counter < 4 and i < self.upper_history_bound:
                 self.gep_history_back()
                 sleep(self.SHORT_TIMEOUT)
                 self.gep_save_image(f)
                 i += 1
+                if self.DATA_CURRENT == self.DATA_PREVIOUS:
+                    same_counter += 1
 
             self.move_images(f)
             self.gep_history_close()

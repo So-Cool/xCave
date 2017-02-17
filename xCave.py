@@ -47,7 +47,22 @@ except ImportError, e:
     print >> sys.stderr, e
     print >> sys.stderr, 40*"~-"
     GEO = False
-# from xCave.fitBB import ElementOffset
+try:
+    from xCave.fitBB import gui
+    GUI = True
+except ImportError, e:
+    print >> sys.stderr, "GUI packages are missing."
+    print >> sys.stderr, e
+    print >> sys.stderr, 40*"~-"
+    GUI = False
+try:
+    from xCave.fitBB import Fitter
+    ALI = True
+except ImportError, e:
+    print >> sys.stderr, "Image alignment packages are missing."
+    print >> sys.stderr, e
+    print >> sys.stderr, 40*"~-"
+    ALI = False
 
 CONFIG_FILE = "./xCave.conf"
 
@@ -69,6 +84,12 @@ parser_group1.add_argument('-k', '--klm', required=False, dest="klm", \
 parser_group1.add_argument('-g', '--geolocate', required=False, type=str, \
                            nargs=2, dest="geolocate", default="", action='store', \
                            help=('Geolocate image in an OSM file or a set of OSM files. The first argument is OSM file or a folder containing OSM files; the second argument is an image to be geo-located.'))
+parser_group1.add_argument('-a', '--align', required=False, dest="align", \
+                           type=str, nargs=1, default="", action='store', \
+                           help=('Invoke GUI to align images in given directory.'))
+parser_group1.add_argument('-p', '--apply', required=False, dest="apply", \
+                           type=str, nargs=2, default="", action='store', \
+                           help=('Apply alignment to images in given directory (the first argument is *alignment file* and the second is *directory* with images).'))
 
 # configuration parser
 conf = ConfigParser.ConfigParser()
@@ -172,7 +193,17 @@ if __name__ == "__main__":
                 parse_osm(f, regions)
 
     # Geolocate image(s)
-    if len(args.geolocate) == 2:
+    if len(args.geolocate) == 2 and GEO:
         p = PatchFinder(args.geolocate[0]) # p = PatchFinder("./", "./osm.osm")
         p.load_osm_location_distances(args.geolocate[1])
         p.print_location()
+
+    # Align images
+    if args.align and GUI:
+        bounding_dimension = config.get("aligner", {}).get("max_dim", 700)
+        gui(args.align[0], bounding_dimension)
+
+    # Apply alignment
+    if args.apply and ALI:
+        a = Fitter(args.apply[1], args.apply[0])
+        a.apply_calibration()

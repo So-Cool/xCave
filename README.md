@@ -66,8 +66,14 @@ When resizing the window make sure that history panel fits into the screen.
 # or ./xCave.py -k ./osms/
 
 ./xCave.py -i 85.307_27.702_85.312_27.705_objects/111823094.kml
+./xCave.py -i 85.307_27.702_85.312_27.705_objects/112654809.kml
 # or ./xCave.py -i 85.307_27.702_85.312_27.705_objects/
 
 ./xCave.py -g 85.307_27.702_85.312_27.705.osm _test_data/WP_20161010_075.jpg
 # or ./xCave.py -g osm_test/ _test_data/WP_20161010_075.jpg
+
+./xCave.py -a 85.307_27.702_85.312_27.705_objects/111823094
+
+./xCave.py -p 85.307_27.702_85.312_27.705_objects/111823094/calibration.clb 85.307_27.702_85.312_27.705_objects/111823094
+./xCave.py -p 85.307_27.702_85.312_27.705_objects/111823094/calibration.clb 85.307_27.702_85.312_27.705_objects/112654809/
 ```

@@ -1,136 +1,20 @@
 import glob
+import json
 import os
-import Tkinter as tk
-# from geopy.distance import vincenty
+from Tkinter import Tk, Label
 from PIL import Image, ImageDraw, ImageTk
 from PIL.ImageChops import offset
 from osm import OSMinterface
 
-class ElementOffset():
-    def __init__(self, region_folder):
-        """Calibrate given region."""
-        self.region_folder = os.path.abspath(region_folder)
-
-        self.objects_to_calibrate = []
-        for o in os.listdir(self.region_folder):
-            d = os.path.join(self.region_folder, o)
-            if os.path.isdir(d) and not o.endswith("_date"):
-                self.objects_to_calibrate.append(d)
-
-        self.offset = {}
-
-    def read_images(self, object_series):
-        """Read in all images captured for given OSM file."""
-        images = {}
-        for i in glob.glob(object_series + "/*.jpg"):
-            images[i] = Image.open(i)
-        image_size = (images.values()[0].size)
-        return image_size, images
-
-    def calibrate(self, calibrate=None):
-        """Calibrate region based on selected images.
-        If object to calibrate not defined calibrate the first one."""
-        if calibrate is None:
-            calibrate = self.objects_to_calibrate[0]
-
-        tn_size = (700, 700)
-
-        image_size, images = self.read_images(calibrate)
-
-        middle = (int(image_size[0]/2.0), int(image_size[1]/2.0))
-        square_half_side = int(0.025*max(image_size))
-        square = [middle[0]-square_half_side, middle[1]-square_half_side, \
-                  middle[0]+square_half_side, middle[1]+square_half_side]
-
-        images_keys = []
-        for img in images.keys():
-            time = os.path.basename(img).split("_")
-            for t in time:
-                if t.endswith(".jpg"):
-                    time = t.strip(".jpg")
-                    break
-            images_keys.append((int(time), img))
-        images_keys.sort()
-
-        global_x_offset = 0
-        global_y_offset = 0
-        for time, img in images_keys:
-            x_offset = None
-            y_offset = None
-
-            while x_offset != 0 or y_offset != 0:
-                print "Please close the image window to continue..."
-                root = tk.Tk() # Toplevel()
-                root.title(img)
-                root.geometry("%dx%d+00+00" % tn_size)
-
-                # Resize for displaying purposes
-                tn = images[img].copy()
-
-                # Offset the image
-                tn = offset(tn, global_x_offset, global_y_offset)
-
-                draw = ImageDraw.Draw(tn, 'RGBA')
-                draw.rectangle(square, (255, 0, 0, 125))
-                del draw
-
-                tn.thumbnail(tn_size, Image.ANTIALIAS)
-
-                tk_img = ImageTk.PhotoImage(tn)
-                panel = tk.Label(root, image=tk_img)
-                panel.pack(side="bottom", fill="both", expand="yes")
-                root.mainloop()
-
-                x_offset = int(input("x-offset? "))
-                y_offset = int(input("y-offset? "))
-
-                global_x_offset += x_offset
-                global_y_offset += y_offset
-            self.offset[str(time)] = (global_x_offset, global_y_offset)
-
-    def save_calibration(self, clb_file=None):
-        if clb_file is None:
-            clb_file = self.region_folder + "/calibration.clb"
-        calibration = ""
-        cal_keys = self.offset.keys()
-        cal_keys.sort(key=int)
-        for i in cal_keys:
-            calibration += i + ", " + str(self.offset[i]) + "\n"
-        with open(clb_file, "w") as calibration_file:
-            calibration_file.write(calibration)
-
-    def load_calibration(self, clb_file=None):
-        if clb_file is None:
-            clb_file = self.region_folder + "/calibration.clb"
-        with open(clb_file, "r") as calibration_file:
-            for r in calibration_file:
-                r = r.replace("(", "").replace(")", "")
-                r = r.split(", ")
-                r = [i.strip() for i in r]
-                self.offset[r[0]] = (int(r[1]), int(r[2]))
-
-    def apply_calibration(self):
-        """Apply calibration to all images."""
-        for i in self.objects_to_calibrate:
-            calibrated_dir = i + "_calibrated"
-            # Create calibrated dir
-            if not os.path.exists(calibrated_dir):
-                os.makedirs(calibrated_dir)
-
-            for j in glob.glob(i + "/*.jpg"):
-                filename = os.path.basename(j)
-                time = filename.split("_")
-                for t in time:
-                    if t.endswith(".jpg"):
-                        time = t.strip(".jpg")
-                        break
-
-                if time in self.offset:
-                    img = Image.open(j)
-                    img = offset(img, self.offset[time][0], self.offset[time][1])
-                    img.save(calibrated_dir + "/" + filename, "JPEG")
-
-class FitBB():
+class FitBB:
+    """
+    # Cut test bboxes
+    f = FitBB("bs8.osm")
+    f.read_images()
+    f.get_bounding_dimension()
+    bboxes = f.pixelise_map_objects()
+    f.plot_images(bboxes)
+    """
     def __init__(self, region_name, region_folder=None):
         """Read in OSM file describing the region and the folder containing
         historical imagery of this region."""
@@ -156,26 +40,6 @@ class FitBB():
         # Images placeholder
         self.images = None
         self.image_size = None
-
-
-#   def test():
-#       left = 0.0
-#       right = abs(float(self.bosm.bounds["maxlon"]) - float(self.osm.bounds["minlon"]))
-#       bottom = 0.0
-#       top = abs(float(self.osm.bounds["maxlat"]) - float(self.osm.bounds["minlat"]))
-#       top *= 2
-#       #
-#       #
-#       l = .0
-#       r = .0
-#       b = .0
-#       t = .0
-#       #
-#       #
-#       # int x =  (int) ((MAP_WIDTH/360.0) * (180 + lon));
-#       # int y =  (int) ((MAP_HEIGHT/180.0) * (90 - lat));
-#       #
-#       #
 
     def get_bounding_dimension(self):
         # Figure out which dimension is the limiting one
@@ -269,78 +133,159 @@ class FitBB():
 
             print "Please close the image window to continue..."
 
-    def cut_bb(self):
-        """Cut out bounding boxes from images and save them into separate files
-        using their unique identifiers (from openStreet maps)."""
-       # width, height = im.size
-       # w, h = yourImage.size
-       # yourImage.crop((0, 30, w, h-30)).save(...)
-        pass
+class Aligner:
+    def __init__(self, master, region_folder, bounding_dimension=700):
+        # Initialise data
+        self.region_folder = os.path.abspath(region_folder)
+        self.bounding_dimension = bounding_dimension
+        self.images, self.size = self.read_images(self.region_folder)
 
-    def read_user_reshape(self):
-        """Read in and save user parameters: x offset, y offset, and scale."""
-        pass
+        self.offset = {}
+        self.global_x_offset = 0
+        self.global_y_offset = 0
 
-#    def plot_bb(self):
-#        """Fit bounding boxes into images."""
-#        o = OSMinterface(self.filename)
-#        o.read()
-#        map_centre = o.get_centre()
-#
-#        image_size = self.images.items()[0].size
-#        image_centre = (image_size[0]/2, image_size[1]/2)
-#
-#        for im in self.images:
-#            draw = ImageDraw.Draw(self.images[im])
-#            for ob in o.objects:
-#                for pt in
-#                draw.line((0, im.size[1], im.size[0], 0), fill=128, width=10)
-#            self.images[im].save(im[:-4]+".drawn", "jpeg")
+        middle = (int(self.size[0]/2.0), int(self.size[1]/2.0))
+        square_half_side = int(0.025*max(self.size))
+        self.square = [middle[0]-square_half_side, middle[1]-square_half_side, \
+                       middle[0]+square_half_side, middle[1]+square_half_side]
 
-class FitBBgui(tk.Tk):
-    """GUI for fixing the position of the bounding boxes."""
+        self.img_index = []
+        for img in self.images.keys():
+            time = os.path.basename(img).split("_")
+            for t in time:
+                if t.endswith(".jpg"):
+                    time = t.strip(".jpg")
+                    break
+            self.img_index.append((int(time), img))
+        self.img_index.sort()
 
-    def __init__(self):
-        tk.Tk.__init__(self)
-        self.x = self.y = 0
-        self.canvas = tk.Canvas(self, width=512, height=512, cursor="cross")
-        self.canvas.pack(side="top", fill="both", expand=True)
-        self.canvas.bind("<ButtonPress-1>", self.on_button_press)
-        self.canvas.bind("<B1-Motion>", self.on_move_press)
-        self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
+        ########################################################################
 
-        self.rect = None
+        # Initialise GUI
+        # Set window title
+        self.master = master
+        master.title("Aligner")
 
-        self.start_x = None
-        self.start_y = None
+        # Set window size
+        master.geometry("%dx%d+00+00" % (self.bounding_dimension, self.bounding_dimension))
+
+        # self.label = Label(master, text="Welcome to Aligner!")
+        # self.label.pack()
+
+        self.label_index = 0
+        self.set_photo()
+        self.label = Label(master, image=self.photo)
+        self.label.focus_set()
+        self.label.bind("<Return>", self.cycle_images)
+        self.label.bind("<Left>", self.left_key)
+        self.label.bind("<Right>", self.right_key)
+        self.label.bind("<Up>", self.up_key)
+        self.label.bind("<Down>", self.down_key)
+        self.label.bind("<q>", self.quit)
+        self.label.pack()
+
+    def set_photo(self):
+        # Sort out the image
+        tn = self.images[self.img_index[self.label_index][1]].copy()
+        # Offset the image
+        tn = offset(tn, self.global_x_offset, self.global_y_offset)
+        draw = ImageDraw.Draw(tn, 'RGBA')
+        draw.rectangle(self.square, (255, 0, 0, 125))
+        del draw
+        tn.thumbnail((self.bounding_dimension, self.bounding_dimension), Image.ANTIALIAS)
+        self.photo = ImageTk.PhotoImage(tn)
+
+    def cycle_images(self, event):
+        self.offset[str(self.img_index[self.label_index][0])] = (self.global_x_offset, self.global_y_offset)
+        self.save_calibration()
+        self.label_index += 1
+        if self.label_index >= len(self.img_index):
+            self.master.quit()
+        else:
+            self.rebuild_image()
+
+    def quit(self, event):
+        self.master.quit()
+
+    def left_key(self, event):
+        self.global_x_offset -= 1
+        self.rebuild_image()
+
+    def right_key(self, event):
+        self.global_x_offset += 1
+        self.rebuild_image()
+
+    def up_key(self, event):
+        self.global_y_offset -= 1
+        self.rebuild_image()
+
+    def down_key(self, event):
+        self.global_y_offset += 1
+        self.rebuild_image()
+
+    def rebuild_image(self):
+        self.set_photo()
+        self.label.config(image=self.photo)
+
+    def read_images(self, img_folder):
+        """Read in all images captured for given OSM file."""
+        imgs = []
+        for o in os.listdir(img_folder):
+            d = os.path.join(img_folder, o)
+            if os.path.isfile(d) and o.lower().endswith(".jpg"):
+                imgs.append(d)
+
+        images = {}
+        for i in imgs:
+            images[i] = Image.open(i)
+        image_size = (images.values()[0].size)
+        return images, image_size
+
+    def save_calibration(self, clb_file=None):
+        if clb_file is None:
+            clb_file = os.path.join(self.region_folder, "calibration.clb")
+        with open(clb_file, "w") as calibration_file:
+            json.dump(self.offset, calibration_file, sort_keys=True, indent=2, separators=(',', ': '))
 
 
-        self._draw_image()
+class Fitter:
+    def __init__(self, region_folder, calibration_file):
+        self.region_folder = os.path.abspath(region_folder)
+        if self.region_folder[-1] == "/":
+            self.calibrated_folder = self.region_folder[-1] + "_calibrated"
+        else:
+            self.calibrated_folder = self.region_folder + "_calibrated"
+        self.calibration_file = os.path.abspath(calibration_file)
+        self.calibration = None
 
+        self.load_calibration()
 
-    def _draw_image(self):
-         self.im = Image.open('./resource/lena.jpg')
-         self.tk_im = ImageTk.PhotoImage(self.im)
-         self.canvas.create_image(0,0,anchor="nw",image=self.tk_im)
+    def load_calibration(self, clb_file=None):
+        if clb_file is None:
+            clb_file = self.calibration_file
+        with open(clb_file, "r") as calibration_file:
+            self.calibration = json.load(calibration_file)
 
+    def apply_calibration(self):
+        """Apply calibration to all images."""
+        # create calibrated dir
+        if not os.path.exists(self.calibrated_folder):
+            os.makedirs(self.calibrated_folder)
 
+        for j in glob.glob(os.path.join(self.region_folder, "*.jpg")):
+            filename = os.path.basename(j)
+            time = filename.split("_")
+            for t in time:
+                if t.endswith(".jpg"):
+                    time = t.strip(".jpg")
+                    break
 
-    def on_button_press(self, event):
-        # save mouse drag start position
-        self.start_x = event.x
-        self.start_y = event.y
+            if time in self.calibration:
+                img = Image.open(j)
+                img = offset(img, self.calibration[time][0], self.calibration[time][1])
+                img.save(os.path.join(self.calibrated_folder, filename), "jpeg")
 
-        # create rectangle if not yet exist
-        #if not self.rect:
-        self.rect = self.canvas.create_rectangle(self.x, self.y, 1, 1, fill="black")
-
-    def on_move_press(self, event):
-        curX, curY = (event.x, event.y)
-
-        # expand rectangle as you drag the mouse
-        self.canvas.coords(self.rect, self.start_x, self.start_y, curX, curY)
-
-
-
-    def on_button_release(self, event):
-        pass
+def gui(region_folder, bounding_dimension=700):
+    root = Tk()
+    my_gui = Aligner(root, region_folder, bounding_dimension)
+    root.mainloop()
