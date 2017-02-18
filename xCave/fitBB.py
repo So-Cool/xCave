@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+import sys
 from Tkinter import Tk, Label
 from PIL import Image, ImageDraw, ImageTk
 from PIL.ImageChops import offset
@@ -10,6 +11,8 @@ class Aligner:
         # Initialise data
         self.region_folder = os.path.abspath(region_folder)
         self.bounding_dimension = bounding_dimension
+        self.clb_file = os.path.join(self.region_folder, \
+                                     os.path.split(self.region_folder)[1]+".clb")
         self.images, self.size = self.read_images(self.region_folder)
 
         self.offset = {}
@@ -31,6 +34,7 @@ class Aligner:
             self.img_index.append((int(time), img))
         self.img_index.sort()
 
+        self.check_calibration()
         ########################################################################
 
         # Initialise GUI
@@ -113,11 +117,32 @@ class Aligner:
         image_size = (images.values()[0].size)
         return images, image_size
 
-    def save_calibration(self, clb_file=None):
-        if clb_file is None:
-            clb_file = os.path.join(self.region_folder, "calibration.clb")
-        with open(clb_file, "w") as calibration_file:
+    def save_calibration(self):
+        with open(self.clb_file, "w") as calibration_file:
             json.dump(self.offset, calibration_file, sort_keys=True, indent=2, separators=(',', ': '))
+
+    def check_calibration(self):
+        if os.path.isfile(self.clb_file):
+            print "Calibration file already exists:\n    %s" % self.clb_file
+            with open(self.clb_file, "r") as calibration_file:
+                self.offset = json.load(calibration_file)
+                calib = [int(i) for i in self.offset.keys()]
+            if len(self.img_index) != len(calib):
+                rm = []
+                print "Not all images are aligned."
+                print "Aligning only the images with missing alignment values:"
+                for i, j in self.img_index:
+                    if i in calib:
+                        rm.append((i,j))
+                    else:
+                        print ">    %s" % j
+                for i in rm:
+                    self.img_index.remove(i)
+            else:
+                print "All images are aligned."
+                print "If you want to align all the images again please remove the *.clb file."
+                print "If you want to align some of the images again please remove specific entry in the *.clb file."
+                sys.exit()
 
 class Fitter:
     def __init__(self, region_folder, calibration_file):

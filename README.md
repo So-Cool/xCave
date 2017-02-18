@@ -118,8 +118,8 @@ Usecase:
 
 ./xCave.py -a 85.307_27.702_85.312_27.705_objects/111823094
 
-./xCave.py -p 85.307_27.702_85.312_27.705_objects/111823094/calibration.clb 85.307_27.702_85.312_27.705_objects/111823094
-./xCave.py -p 85.307_27.702_85.312_27.705_objects/111823094/calibration.clb 85.307_27.702_85.312_27.705_objects/112654809/
+./xCave.py -p 85.307_27.702_85.312_27.705_objects/111823094/111823094.clb 85.307_27.702_85.312_27.705_objects/111823094
+./xCave.py -p 85.307_27.702_85.312_27.705_objects/111823094/111823094.clb 85.307_27.702_85.312_27.705_objects/112654809/
 ```
 
 Where `-i` opens Google Earth and controls mouse and keybord to download the imagery, and `-a` opens GUI to align this imagery. The GUI invoked with `-a` uses the following keyboard shortcuts:
