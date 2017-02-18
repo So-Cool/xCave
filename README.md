@@ -59,6 +59,45 @@ When resizing the window make sure that history panel fits into the screen.
 ![](./docs/ge_q.png "")
 
 ## Usage ##
+The software has the following commandline options:
+```
+$ ./xCave.py -h
+usage: xCave.py [-h] [-c | -i IMAGERY | -o OSM | -k KLM [KLM ...] | -g
+                GEOLOCATE GEOLOCATE | -a ALIGN | -p APPLY APPLY]
+
+Google Earth Pro imagery extractor.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -c, --calibrate       Calibrate Google Earth Pro interface.
+  -i IMAGERY, --imagery IMAGERY
+                        Download Google Earth Pro imagery from specified KML
+                        file or a folder with KML files.
+  -o OSM, --osm OSM     Download region file from OpenStreet Maps. This option
+                        requires a string of 4 values restricting the region:
+                        "left bottom top right".
+  -k KLM [KLM ...], --klm KLM [KLM ...]
+                        Convert given OSM file into KLM file. The first
+                        argument is a path to an OSM file or a directory
+                        containing OSM files. The second optional argument is
+                        a list of points of interest; 5 objects close to each
+                        point will be extracted and saved as a separate KLM
+                        file e.g. "(27.703625,85.309184); (27.703474,
+                        85.310344)".
+  -g GEOLOCATE GEOLOCATE, --geolocate GEOLOCATE GEOLOCATE
+                        Geolocate image in an OSM file or a set of OSM files.
+                        The first argument is OSM file or a folder containing
+                        OSM files; the second argument is an image to be geo-
+                        located.
+  -a ALIGN, --align ALIGN
+                        Invoke GUI to align images in given directory.
+  -p APPLY APPLY, --apply APPLY APPLY
+                        Apply alignment to images in given directory (the
+                        first argument is *alignment file* and the second is
+                        *directory* with images).
+```
+
+Usecase:
 ```
 ./xCave.py -h
 
@@ -82,3 +121,11 @@ When resizing the window make sure that history panel fits into the screen.
 ./xCave.py -p 85.307_27.702_85.312_27.705_objects/111823094/calibration.clb 85.307_27.702_85.312_27.705_objects/111823094
 ./xCave.py -p 85.307_27.702_85.312_27.705_objects/111823094/calibration.clb 85.307_27.702_85.312_27.705_objects/112654809/
 ```
+
+Where `-i` opens Google Earth and controls mouse and keybord to download the imagery, and `-a` opens GUI to align this imagery. The GUI invoked with `-a` uses the following keyboard shortcuts:
+* `q` to quit the application,
+* `<up-arrow>` to move the image one pixel up,
+* `<down-arrow>` to move the image one pixel down,
+* `<left-arrow>` to move the image one pixel left,
+* `<right-arrow>` to move the image one pixel right,
+* `<return>`(`<enter>`) to accept the allignment and go to the next image.
