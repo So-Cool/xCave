@@ -140,14 +140,17 @@ class GoogleEarthProInterface:
              self.Y_SCALING*(a[1]+self.POSITIONS["google_earth_pro_offset"][1]))
         return o
 
-    def __init__(self, filename, gep_path, version, save_location="~/Desktop/", \
-                 calibration=None, history_bound=None, selected_resolution="maximum", \
-                 help_message=True, scaling=1, os_name="linux", typewrite_interval=0.25):
+    def __init__(self, filename, gep_path, version, \
+                 save_location="~/Desktop/", calibration=None, \
+                 history_bound=30, selected_resolution="maximum", \
+                 help_message=True, scaling=1, os_name="linux", \
+                 typewrite_interval=0.25, start_from=0):
         self.gep_path = gep_path
         self.save_location = save_location
         self.selected_resolution = selected_resolution
         self.version = version
         self.typewrite_interval = typewrite_interval
+        self.start_from = start_from
 
         if scaling:
             self.scaling = scaling
@@ -160,10 +163,7 @@ class GoogleEarthProInterface:
         else:
             self.opener = "open "
 
-        if history_bound is None:
-            self.upper_history_bound = 30
-        else:
-            self.upper_history_bound = history_bound
+        self.upper_history_bound = history_bound
 
         if os.path.isfile(filename):
             self.filename = [filename]
@@ -299,6 +299,11 @@ class GoogleEarthProInterface:
             , "JPEG")
 
     def gep_save_image(self, filename=None):
+        if self.history_counter < self.start_from:
+            self.history_counter += 1
+            sleep(self.SHORT_TIMEOUT)
+            return
+
         if filename is None:
             filename = self.filename[0]
         # Save data
@@ -410,13 +415,17 @@ class GoogleEarthProInterface:
         else:
             dir_name = os.path.abspath(filename)[:-4]
         date_dir_name = dir_name + "_dates"
-        while True:
-            if not os.path.exists(dir_name) and not os.path.exists(date_dir_name):
-                os.makedirs(dir_name)
-                os.makedirs(date_dir_name)
-                break
-            dir_name += "_"
-            date_dir_name += "_"
+#       while True:
+#           if not os.path.exists(dir_name) and not os.path.exists(date_dir_name):
+#               os.makedirs(dir_name)
+#               os.makedirs(date_dir_name)
+#               break
+#           dir_name += "_"
+#           date_dir_name += "_"
+        if not os.path.exists(dir_name):
+            os.makedirs(dir_name)
+        if not os.path.exists(date_dir_name):
+            os.makedirs(date_dir_name)
 
         # Move date files
         for i in glob.glob(os.path.join(os.path.expanduser(self.save_location),

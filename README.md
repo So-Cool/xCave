@@ -62,17 +62,21 @@ When resizing the window make sure that history panel fits into the screen.
 The software has the following commandline options:
 ```
 $ ./xCave.py -h
-usage: xCave.py [-h] [-c | -i IMAGERY | -o OSM | -k KLM [KLM ...] | -g
-                GEOLOCATE GEOLOCATE | -a ALIGN | -p APPLY APPLY]
+usage: xCave.py [-h] [-c | -i IMAGERY [IMAGERY ...] | -o OSM | -k KLM
+                [KLM ...] | -g GEOLOCATE GEOLOCATE | -a ALIGN | -p APPLY
+                APPLY]
 
 Google Earth Pro imagery extractor.
 
 optional arguments:
   -h, --help            show this help message and exit
   -c, --calibrate       Calibrate Google Earth Pro interface.
-  -i IMAGERY, --imagery IMAGERY
+  -i IMAGERY [IMAGERY ...], --imagery IMAGERY [IMAGERY ...]
                         Download Google Earth Pro imagery from specified KML
-                        file or a folder with KML files.
+                        file or a folder with KML files. If second argument
+                        (integer) is provided the imagery will be downloaded
+                        from given image number onwards (steps down the Google
+                        Earth history).
   -o OSM, --osm OSM     Download region file from OpenStreet Maps. This option
                         requires a string of 4 values restricting the region:
                         "left bottom top right".
@@ -111,6 +115,7 @@ Usecase:
 
 ./xCave.py -i 85.307_27.702_85.312_27.705_objects/111823094.kml
 ./xCave.py -i 85.307_27.702_85.312_27.705_objects/112654809.kml
+# or ./xCave.py -i 85.307_27.702_85.312_27.705_objects/112654809.kml 7
 # or ./xCave.py -i 85.307_27.702_85.312_27.705_objects/
 
 ./xCave.py -g 85.307_27.702_85.312_27.705.osm _test_data/WP_20161010_075.jpg

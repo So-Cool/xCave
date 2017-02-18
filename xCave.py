@@ -73,8 +73,8 @@ parser_group1.add_argument('-c', '--calibrate', required=False, dest="calibrate"
                            default=False, action='store_true', \
                            help=('Calibrate Google Earth Pro interface.'))
 parser_group1.add_argument('-i', '--imagery', required=False, dest="imagery", \
-                           type=str, nargs=1, default="", action='store', \
-                           help=('Download Google Earth Pro imagery from specified KML file or a folder with KML files.'))
+                           type=str, nargs="+", default="", action='store', \
+                           help=('Download Google Earth Pro imagery from specified KML file or a folder with KML files.\nIf second argument (integer) is provided the imagery will be downloaded from given image number onwards (steps down the Google Earth history).'))
 parser_group1.add_argument('-o', '--osm', required=False, dest="osm", \
                            type=str, nargs=1, default="", action='store', \
                            help=('Download region file from OpenStreet Maps. This option requires a string of 4 values restricting the region: "left bottom top right".'))
@@ -126,9 +126,10 @@ if __name__ == "__main__":
                 conf.set("GoogleEarthCalibration", i, gep_calibration[i])
             with open(CONFIG_FILE, "w") as cfw:
                 conf.write(cfw)
+        sys.exit()
 
     # Download Google Earth History
-    if args.imagery and INTERFACE:
+    if len(args.imagery)>0 and INTERFACE:
         # Load settings
         gep_path = config.get("GoogleEarthPro", {}).get("executable_path", None)
         save_location = config.get("GoogleEarthPro", {}).get("save_location", "~/Desktop")
@@ -144,10 +145,21 @@ if __name__ == "__main__":
         os = config.get("GoogleEarthPro", {}).get("os", "linux")
         typewrite_interval = config.get("GoogleEarthPro", {}).get("typewrite_interval", 0.25)
 
+        if len(args.imagery) == 1:
+            start_point = 0
+        elif len(args.imagery) > 1:
+            try:
+                start_point = int(args.imagery[1])
+            except:
+                print "Second argument (integer) not recognised: [%s]." % args.imagery[1]
+                sys.exit(1)
+
         g = GoogleEarthProInterface(args.imagery[0], gep_path, version, \
                                     save_location, calibration, history_bound, \
-                                    selected_resolution, help_message, scaling, os, typewrite_interval)
+                                    selected_resolution, help_message, \
+                                    scaling, os, typewrite_interval, start_point)
         g.gep_save_history()
+        sys.exit()
 
     # Get OSM file of specified region
     if args.osm and OSM:
@@ -161,6 +173,7 @@ if __name__ == "__main__":
         if split_osm:
             a.split_region()
         a.get_osm()
+        sys.exit()
 
     # Save as klm
     if len(args.klm) > 0 and KLM:
@@ -192,19 +205,25 @@ if __name__ == "__main__":
             files = [os.path.join(klm_name,i) for i in files if i.endswith(".osm")]
             for f in files:
                 parse_osm(f, regions)
+        sys.exit()
 
     # Geolocate image(s)
     if len(args.geolocate) == 2 and GEO:
         p = PatchFinder(args.geolocate[0]) # p = PatchFinder("./", "./osm.osm")
         p.load_osm_location_distances(args.geolocate[1])
         p.print_location()
+        sys.exit()
 
     # Align images
     if args.align and GUI:
         bounding_dimension = config.get("aligner", {}).get("max_dim", 700)
         gui(args.align[0], bounding_dimension)
+        sys.exit()
 
     # Apply alignment
     if args.apply and ALI:
         a = Fitter(args.apply[1], args.apply[0])
         a.apply_calibration()
+        sys.exit()
+
+    parser.print_help()
