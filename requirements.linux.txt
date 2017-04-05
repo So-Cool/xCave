@@ -9,5 +9,3 @@ PyScreeze==0.1.8
 PyMsgBox==1.0.3
 PyAutoGUI==0.9.33
 Pillow==3.4.2
-pyobjc==3.2.1
-pyobjc-core==3.2.1

@@ -29,6 +29,7 @@ sudo apt-get install python-dev
 sudo apt-get install python-imaging-tk
 sudo apt-get install python-numpy
 sudo apt-get install python-scipy
+sudo apt-get install python-xlib
 ```
 
 ## Google Earth configuration ##
