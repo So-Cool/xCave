@@ -217,7 +217,7 @@ class GoogleEarthProInterface:
                     self.POSITIONS[i] = self.offset(self.POSITIONS[i])
 
     def gep_open(self):
-        subprocess.Popen(["/bin/bash", "-c", self.gep_path+" &"])
+        subprocess.Popen(["/bin/bash", "-c", self.opener+self.gep_path+" &"])
         sleep(self.LONG_TIMEOUT)
 
     def gep_close(self, confirm_choice=True):
