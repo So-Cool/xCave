@@ -32,6 +32,16 @@ sudo apt-get install python-scipy
 sudo apt-get install python-xlib
 ```
 
+## xCave configuration ##
+Before `xCave` can be used it needs to be configured. Open `xCave.conf` with your favourite text editor and set the following values:
+* `os` -- line 15
+* `version` -- line 19
+* `resolution` -- line 33
+* `executable_path` -- line 38
+* `save_location` -- line 43
+
+Their meaning and possible values are explained in detail inline in the `xCave.conf` file. Please note that the explanations and comments will disappear from this file once Google Earth gets calibrated.
+
 ## Google Earth configuration ##
 ### Configure Google Earth interface ###
 - Uncheck *Show tips at start-up*
@@ -114,7 +124,6 @@ Usecase:
 # or ./xCave.py -k 85.307_27.702_85.312_27.705.osm
 # or ./xCave.py -k ./osms/
 
-./xCave.py -i 85.307_27.702_85.312_27.705_objects/111823094.kml
 ./xCave.py -i 85.307_27.702_85.312_27.705_objects/112654809.kml
 # or ./xCave.py -i 85.307_27.702_85.312_27.705_objects/112654809.kml 7
 # or ./xCave.py -i 85.307_27.702_85.312_27.705_objects/
