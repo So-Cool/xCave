@@ -4,9 +4,9 @@ requests==2.12.0
 pynput==1.2
 enum34==1.1.6
 PyTweening==1.0.3
-PyScreeze==0.1.8
+PyScreeze==0.1.13
 PyMsgBox==1.0.3
-PyAutoGUI==0.9.33
+#PyAutoGUI==0.9.33
 Pillow==3.4.2
 pyobjc==3.2.1
 pyobjc-core==3.2.1
