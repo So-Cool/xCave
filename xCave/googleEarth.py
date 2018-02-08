@@ -40,7 +40,7 @@ class GoogleEarthProCalibration:
             # Stop listener
             return False
 
-    def __init__(self, gep_path, version, gui=True, os_name="linux"):
+    def __init__(self, gep_path, version, gui=True, os_name="linux", help_message=True):
         self.gep_path = gep_path
         self.dummy = "./dummy.kml"
         self.gui = gui
@@ -54,6 +54,21 @@ class GoogleEarthProCalibration:
         self.positions = {}
         for i in self.POSITIONS_NAMES:
             self.positions[i] = None
+
+        if help_message:
+            print "Please uncheck *Show tips at startup*"
+            print "Please uncheck all *Places*"
+            print "Please uncheck all *Layers*"
+            print "Please make sure that *search* tab is opened"
+            print "In *preferences->navigation* set *fly-to-speed* to maximum"
+            print "Now Maximize it to fit your screen space"
+            print "But make sure that history panel fits into screen..."
+            print "and close it"
+            raw_input("Press Enter to open Google Earth Pro...")
+            self.open_gep()
+            raw_input("Press Enter to continue (once the above steps have been completed and Google Earth has been closed)...")
+            if os_name == "linux":
+                raw_input("Please close Google Earth and press Enter")
 
     def mouse_position(self):
         x, y = pyautogui.position()
@@ -143,9 +158,10 @@ class GoogleEarthProInterface:
     def __init__(self, filename, gep_path, version, \
                  save_location="~/Desktop/", calibration=None, \
                  history_bound=30, selected_resolution="maximum", \
-                 help_message=True, scaling=1, os_name="linux", \
+                 scaling=1, os_name="linux", \
                  typewrite_interval=0.25, start_from=0):
         self.gep_path = gep_path
+        self.dummy = "./dummy.kml"
         self.save_location = save_location
         self.selected_resolution = selected_resolution
         self.version = version
@@ -179,20 +195,6 @@ class GoogleEarthProInterface:
         # Save button location
         self.save = None
         self.history_counter = 0
-        if help_message:
-            print "Please uncheck *Show tips at startup*"
-            print "Please uncheck all *Places*"
-            print "Please uncheck all *Layers*"
-            print "Please make sure that *search* tab is opened"
-            print "In *preferences->navigation* set *fly-to-speed* to maximum"
-            print "Now Maximize it to fit your screen space"
-            print "But make sure that history panel fits into screen..."
-            print "and close it"
-            raw_input("Press Enter to open Google Earth Pro...")
-            self.gep_open()
-            raw_input("Press Enter to continue (once the above steps have been completed and Google Earth has been closed)...")
-            if self.os == "linux":
-                raw_input("Please close Google Earth and press Enter")
         self.calibrate(calibration)
 
     def calibrate(self, calibration_dict=None):
@@ -217,7 +219,7 @@ class GoogleEarthProInterface:
                     self.POSITIONS[i] = self.offset(self.POSITIONS[i])
 
     def gep_open(self):
-        subprocess.Popen(["/bin/bash", "-c", self.opener+self.gep_path+" &"])
+        subprocess.Popen(["/bin/bash", "-c", self.opener+self.dummy+" &"])
         sleep(self.LONG_TIMEOUT)
 
     def gep_close(self, confirm_choice=True):
@@ -322,7 +324,7 @@ class GoogleEarthProInterface:
         pyautogui.typewrite(["enter"])
         self.history_counter += 1
 
-        sleep(self.LONG_TIMEOUT/2.0)
+        sleep(self.LONG_TIMEOUT)
         self.DATA_PREVIOUS = self.DATA_CURRENT
         self.DATA_CURRENT = Image.open(os.path.expanduser(os.path.join(self.save_location, name+".jpg")))
 
@@ -379,6 +381,9 @@ class GoogleEarthProInterface:
             self.gep_save_image_setup()
         for f in self.filename:
             self.gep_open_location(f)
+            if self.os == "linux":
+                sleep(self.LONG_TIMEOUT)
+                self.gep_save_image_setup()
             sleep(self.LONG_TIMEOUT)
             self.gep_save_image(f)
 

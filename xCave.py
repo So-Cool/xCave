@@ -115,11 +115,12 @@ if __name__ == "__main__":
             else:
                 print "Quitting"
         else:
+            help_message = config.get("GoogleEarthPro", {}).get("help_message", True)
             gep_path = config.get("GoogleEarthPro", {}).get("executable_path", None)
             gui = config.get("GoogleEarthPro", {}).get("gui", None)
             version = config.get("GoogleEarthPro", {}).get("version", None)
             os = config.get("GoogleEarthPro", {}).get("os", "linux")
-            c = GoogleEarthProCalibration(gep_path, version, gui, os)
+            c = GoogleEarthProCalibration(gep_path, version, gui, os, help_message)
             gep_calibration = c.calibrate()
             conf.set("GoogleEarthPro", "calibrated", True)
             for i in gep_calibration:
@@ -139,7 +140,6 @@ if __name__ == "__main__":
             sys.exit("Google Earth not calibrated.\nExiting...")
         history_bound = config.get("GoogleEarthPro", {}).get("history_bound", 10)
         selected_resolution = config.get("GoogleEarthPro", {}).get("resolution", "current")
-        help_message = config.get("GoogleEarthPro", {}).get("help_message", True)
         version = config.get("GoogleEarthPro", {}).get("version", None)
         scaling = config.get("GoogleEarthPro", {}).get("retina_scaling", 1)
         os = config.get("GoogleEarthPro", {}).get("os", "linux")
@@ -156,7 +156,7 @@ if __name__ == "__main__":
 
         g = GoogleEarthProInterface(args.imagery[0], gep_path, version, \
                                     save_location, calibration, history_bound, \
-                                    selected_resolution, help_message, \
+                                    selected_resolution, \
                                     scaling, os, typewrite_interval, start_point)
         g.gep_save_history()
         sys.exit()
